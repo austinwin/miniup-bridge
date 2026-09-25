@@ -286,11 +286,11 @@
     var DASHBOARD = "https://www.miniup.io/dashboard/bridge";
     var VERSION = "0.1.0";
     var CREDENTIAL_KEY = "miniup.mobileBridge.credential.v1";
-    var POLL_KEY = "miniup.mobileBridge.pollToken.v1";
+    var POLL_KEY = "miniup.mobileBridge.pollToken.v1";\n    var CODE_KEY = "miniup.mobileBridge.pairCode.v1";
 
     var state = {
       credential: localStorage.getItem(CREDENTIAL_KEY) || "",
-      pollToken: sessionStorage.getItem(POLL_KEY) || "",
+      pollToken: sessionStorage.getItem(POLL_KEY) || "",\n      pairCode: sessionStorage.getItem(CODE_KEY) || "",
       account: null,
       destinations: {sites:[],datasets:[],tables:[]},
       file: null,
@@ -752,7 +752,7 @@
     if(state.pollToken){
       els.pairStart.classList.add("hidden");
       els.pairFlow.classList.remove("hidden");
-      els.pairCode.textContent = "Pending";
+      els.pairCode.textContent = state.pairCode || "Pending";
       status(els.connectStatus, "A pairing request is still pending. Approve it in MiniUp, then tap I've approved it.", "info");
     }
 
