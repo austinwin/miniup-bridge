@@ -286,11 +286,13 @@
     var DASHBOARD = "https://www.miniup.io/dashboard/bridge";
     var VERSION = "0.1.0";
     var CREDENTIAL_KEY = "miniup.mobileBridge.credential.v1";
-    var POLL_KEY = "miniup.mobileBridge.pollToken.v1";\n    var CODE_KEY = "miniup.mobileBridge.pairCode.v1";
+    var POLL_KEY = "miniup.mobileBridge.pollToken.v1";
+    var CODE_KEY = "miniup.mobileBridge.pairCode.v1";
 
     var state = {
       credential: localStorage.getItem(CREDENTIAL_KEY) || "",
-      pollToken: sessionStorage.getItem(POLL_KEY) || "",\n      pairCode: sessionStorage.getItem(CODE_KEY) || "",
+      pollToken: sessionStorage.getItem(POLL_KEY) || "",
+      pairCode: sessionStorage.getItem(CODE_KEY) || "",
       account: null,
       destinations: {sites:[],datasets:[],tables:[]},
       file: null,
@@ -535,9 +537,11 @@
       try{
         var data = await api("pair", {body:{name:"MiniUp Mobile Bridge",platform:platformName(),version:VERSION}});
         state.pollToken = data.pollToken || "";
-        if(!state.pollToken) throw new Error("MiniUp did not return a pairing token.");
+        state.pairCode = data.code || "";
+        if(!state.pollToken || !state.pairCode) throw new Error("MiniUp did not return a complete pairing request.");
         sessionStorage.setItem(POLL_KEY, state.pollToken);
-        els.pairCode.textContent = data.code || "—";
+        sessionStorage.setItem(CODE_KEY, state.pairCode);
+        els.pairCode.textContent = state.pairCode;
         els.pairStart.classList.add("hidden");
         els.pairFlow.classList.remove("hidden");
         status(els.connectStatus, "Copy the code, approve it in MiniUp, then return here.", "info");
@@ -562,10 +566,18 @@
         state.credential = data.credential;
         localStorage.setItem(CREDENTIAL_KEY, state.credential);
         state.pollToken = "";
+        state.pairCode = "";
         sessionStorage.removeItem(POLL_KEY);
+        sessionStorage.removeItem(CODE_KEY);
         await loadAccountAndDestinations();
       }catch(e){
-        status(els.connectStatus, e.message || "Unable to finish pairing.", "bad");
+        state.pollToken = "";
+        state.pairCode = "";
+        sessionStorage.removeItem(POLL_KEY);
+        sessionStorage.removeItem(CODE_KEY);
+        els.pairFlow.classList.add("hidden");
+        els.pairStart.classList.remove("hidden");
+        status(els.connectStatus, (e.message || "Unable to finish pairing.") + " Start a new connection if the code expired.", "bad");
       }finally{
         els.finishPairBtn.disabled = false;
       }
@@ -674,7 +686,9 @@
     els.forgetBtn.addEventListener("click", function(){
       clearCredential();
       state.pollToken = "";
+      state.pairCode = "";
       sessionStorage.removeItem(POLL_KEY);
+      sessionStorage.removeItem(CODE_KEY);
       status(els.connectStatus, "Disconnected from this browser.", "info");
       renderConnection();
     });
