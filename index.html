@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MiniUp Bridge">
+  <meta name="description" content="Sync phone files to MiniUp datasets and Tables.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <title>MiniUp Mobile Bridge</title>
+  <style>
+    :root{
+      --bg:#f6f7f9;--card:#fff;--text:#111827;--muted:#667085;--line:#e4e7ec;
+      --brand:#111827;--brandText:#fff;--soft:#f2f4f7;--good:#067647;--goodBg:#ecfdf3;
+      --warn:#b54708;--warnBg:#fffaeb;--bad:#b42318;--badBg:#fef3f2;--focus:#84adff;
+      --radius:18px;--shadow:0 10px 30px rgba(16,24,40,.07)
+    }
+    @media (prefers-color-scheme:dark){
+      :root{
+        --bg:#0b0f16;--card:#121823;--text:#f5f7fa;--muted:#98a2b3;--line:#263141;
+        --brand:#f2f4f7;--brandText:#101828;--soft:#1a2230;--good:#75e0a7;--goodBg:#082e22;
+        --warn:#fec84b;--warnBg:#3b2b0a;--bad:#fda29b;--badBg:#3b1111;--shadow:none
+      }
+    }
+    *{box-sizing:border-box}
+    html{background:var(--bg)}
+    body{
+      margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,
+      "Segoe UI",sans-serif;-webkit-font-smoothing:antialiased
+    }
+    button,input,select{font:inherit}
+    button{touch-action:manipulation}
+    a{color:inherit}
+    .shell{max-width:760px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 40px)}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .brandMark{
+      width:42px;height:42px;border-radius:13px;background:var(--brand);color:var(--brandText);display:grid;place-items:center;
+      font-weight:800;font-size:22px;box-shadow:var(--shadow)
+    }
+    h1{font-size:20px;line-height:1.2;margin:0}
+    .subtitle{margin:3px 0 0;color:var(--muted);font-size:13px}
+    .pill{border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:12px;color:var(--muted);white-space:nowrap}
+    .pill.good{background:var(--goodBg);color:var(--good);border-color:transparent}
+    .hero{
+      background:linear-gradient(145deg,var(--card),var(--soft));border:1px solid var(--line);border-radius:24px;padding:20px;
+      margin-bottom:14px;box-shadow:var(--shadow)
+    }
+    .hero h2{font-size:27px;letter-spacing:-.03em;line-height:1.08;margin:0 0 8px}
+    .hero p{margin:0;color:var(--muted);line-height:1.5}
+    .cards{display:grid;gap:12px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:17px;box-shadow:var(--shadow)}
+    .cardHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .step{display:flex;gap:11px;align-items:flex-start}
+    .stepNo{
+      flex:0 0 auto;width:28px;height:28px;border-radius:9px;background:var(--soft);display:grid;place-items:center;
+      font-size:12px;font-weight:750
+    }
+    .card h3{font-size:16px;margin:2px 0 3px}
+    .hint{font-size:13px;color:var(--muted);line-height:1.45;margin:0}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .stack{display:grid;gap:10px}
+    .btn{
+      border:0;border-radius:12px;padding:12px 14px;min-height:46px;background:var(--brand);color:var(--brandText);
+      font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px
+    }
+    .btn.secondary{background:var(--soft);color:var(--text);border:1px solid var(--line)}
+    .btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .btn:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+    .field{display:grid;gap:6px}
+    label{font-size:12px;font-weight:700;color:var(--muted)}
+    input[type=text],select{
+      width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);
+      padding:0 12px
+    }
+    input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+    .filePick{
+      border:1.5px dashed var(--line);border-radius:15px;padding:17px;text-align:center;background:var(--soft);cursor:pointer;
+      display:block
+    }
+    .filePick strong{display:block;color:var(--text);margin-bottom:3px}
+    .fileInfo{display:none;border:1px solid var(--line);border-radius:13px;padding:12px;background:var(--soft)}
+    .fileInfo.show{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .fileName{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+    .fileMeta{font-size:12px;color:var(--muted);margin-top:3px}
+    .codeBox{
+      font-variant-numeric:tabular-nums;letter-spacing:.13em;font-size:20px;font-weight:800;padding:13px 14px;border-radius:12px;
+      background:var(--soft);border:1px solid var(--line);text-align:center;overflow-wrap:anywhere
+    }
+    .account{display:none;border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+    .account.show{display:block}
+    .accountName{font-size:14px;font-weight:750}
+    .accountEmail{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+    .limits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:11px}
+    .metric{background:var(--soft);border-radius:11px;padding:10px}
+    .metric b{display:block;font-size:14px}
+    .metric span{font-size:11px;color:var(--muted)}
+    .seg{display:grid;grid-template-columns:1fr 1fr;gap:7px;background:var(--soft);border-radius:13px;padding:5px}
+    .seg label{position:relative;cursor:pointer}
+    .seg input{position:absolute;opacity:0}
+    .seg span{display:block;text-align:center;padding:9px;border-radius:9px;color:var(--muted);font-size:13px}
+    .seg input:checked+span{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(16,24,40,.12);font-weight:750}
+    .progress{height:9px;background:var(--soft);border-radius:999px;overflow:hidden;display:none}
+    .progress.show{display:block}
+    .bar{height:100%;width:0;background:var(--brand);border-radius:999px;transition:width .2s ease}
+    .status{display:none;margin-top:10px;border-radius:12px;padding:11px 12px;font-size:13px;line-height:1.4}
+    .status.show{display:block}
+    .status.info{background:var(--soft);color:var(--text)}
+    .status.good{background:var(--goodBg);color:var(--good)}
+    .status.warn{background:var(--warnBg);color:var(--warn)}
+    .status.bad{background:var(--badBg);color:var(--bad)}
+    .install{display:none;margin-top:12px}
+    .install.show{display:block}
+    .footer{font-size:11px;color:var(--muted);line-height:1.5;text-align:center;margin-top:18px;padding:0 14px}
+    .hidden{display:none!important}
+    @media (min-width:640px){
+      .shell{padding-left:24px;padding-right:24px}
+      .hero{padding:25px}
+      .hero h2{font-size:34px}
+      .card{padding:20px}
+      .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <div class="brand">
+        <div class="brandMark">↥</div>
+        <div>
+          <h1>MiniUp Bridge</h1>
+          <p class="subtitle">Mobile file sync</p>
+        </div>
+      </div>
+      <div id="connectionPill" class="pill">Not connected</div>
+    </div>
+
+    <section class="hero">
+      <h2>Move a file from your phone into MiniUp.</h2>
+      <p>Choose a file from Files, iCloud, Drive, or another location your phone exposes. MiniUp handles the conversion and keeps the destination stable.</p>
+      <div id="installArea" class="install">
+        <button id="installBtn" class="btn secondary" type="button">Install on this phone</button>
+        <p id="iosInstallHint" class="hint hidden" style="margin-top:8px">On iPhone/iPad: Share → Add to Home Screen → Open as Web App.</p>
+      </div>
+    </section>
+
+    <div class="cards">
+      <section class="card" aria-labelledby="connectTitle">
+        <div class="cardHead">
+          <div class="step">
+            <div class="stepNo">1</div>
+            <div>
+              <h3 id="connectTitle">Connect MiniUp</h3>
+              <p class="hint">Pair this browser as a Bridge device. You can revoke it later from MiniUp.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="pairStart" class="stack">
+          <button id="pairBtn" class="btn" type="button">Connect MiniUp</button>
+        </div>
+
+        <div id="pairFlow" class="stack hidden">
+          <div id="pairCode" class="codeBox">—</div>
+          <div class="row">
+            <button id="copyCodeBtn" class="btn secondary" type="button">Copy code</button>
+            <a class="btn" href="https://www.miniup.io/dashboard/bridge" target="_blank" rel="noopener">Approve in MiniUp</a>
+          </div>
+          <button id="finishPairBtn" class="btn secondary" type="button">I've approved it</button>
+          <p class="hint">The pairing code expires after 10 minutes.</p>
+        </div>
+
+        <div id="accountBox" class="account">
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <div id="accountName" class="accountName">MiniUp account</div>
+              <div id="accountEmail" class="accountEmail"></div>
+            </div>
+            <button id="forgetBtn" class="btn ghost" type="button">Disconnect</button>
+          </div>
+          <div class="limits">
+            <div class="metric"><b id="uploadLimit">—</b><span>File limit</span></div>
+            <div class="metric"><b id="tableLimit">—</b><span>Rows per Table</span></div>
+            <div class="metric"><b id="tablesUsed">—</b><span>Tables used</span></div>
+            <div class="metric"><b id="uploadsHour">—</b><span>Uploads / hour</span></div>
+          </div>
+        </div>
+        <div id="connectStatus" class="status"></div>
+      </section>
+
+      <section class="card" aria-labelledby="fileTitle">
+        <div class="cardHead">
+          <div class="step">
+            <div class="stepNo">2</div>
+            <div>
+              <h3 id="fileTitle">Choose file</h3>
+              <p class="hint">CSV, Excel, JSON, GeoJSON, shapefile ZIP, Parquet, or GeoParquet.</p>
+            </div>
+          </div>
+        </div>
+        <label class="filePick" for="fileInput">
+          <strong>Choose from this phone</strong>
+          <span class="hint">Tap to open the system file picker</span>
+        </label>
+        <input id="fileInput" type="file" accept=".csv,.tsv,.xlsx,.xls,.json,.jsonl,.ndjson,.geojson,.zip,.parquet,.geoparquet">
+        <div id="fileInfo" class="fileInfo">
+          <div>
+            <div id="fileName" class="fileName"></div>
+            <div id="fileMeta" class="fileMeta"></div>
+          </div>
+          <button id="changeFileBtn" class="btn ghost" type="button">Change</button>
+        </div>
+        <div id="fileStatus" class="status"></div>
+      </section>
+
+      <section class="card" aria-labelledby="destinationTitle">
+        <div class="cardHead">
+          <div class="step">
+            <div class="stepNo">3</div>
+            <div>
+              <h3 id="destinationTitle">Choose destination</h3>
+              <p class="hint">Replace an existing destination or create a new one under an active MiniUp site.</p>
+            </div>
+          </div>
+          <button id="refreshBtn" class="btn ghost" type="button" disabled>Refresh</button>
+        </div>
+
+        <div class="stack">
+          <div class="seg" role="radiogroup" aria-label="Destination type">
+            <label><input type="radio" name="kind" value="dataset" checked><span>Hosted dataset</span></label>
+            <label><input type="radio" name="kind" value="table"><span>Table</span></label>
+          </div>
+
+          <div class="field">
+            <label for="siteSelect">MiniUp site</label>
+            <select id="siteSelect" disabled>
+              <option value="">Connect MiniUp first</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="destinationSelect">Destination</label>
+            <select id="destinationSelect" disabled>
+              <option value="">Create new</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="destinationName">Name</label>
+            <input id="destinationName" type="text" maxlength="120" placeholder="e.g. Contractor Performance" disabled>
+          </div>
+        </div>
+        <div id="destinationStatus" class="status"></div>
+      </section>
+
+      <section class="card" aria-labelledby="syncTitle">
+        <div class="cardHead">
+          <div class="step">
+            <div class="stepNo">4</div>
+            <div>
+              <h3 id="syncTitle">Sync to MiniUp</h3>
+              <p class="hint">The current destination stays unchanged unless conversion and validation succeed.</p>
+            </div>
+          </div>
+        </div>
+
+        <button id="syncBtn" class="btn" type="button" disabled style="width:100%">Sync now</button>
+        <div id="progress" class="progress" style="margin-top:12px"><div id="progressBar" class="bar"></div></div>
+        <div id="syncStatus" class="status"></div>
+      </section>
+    </div>
+
+    <p class="footer">This browser client sends only the file you select. It does not scan your phone, browse folders in the background, or upload local file paths.</p>
+  </main>
+
+  <script>
+  (function(){
+    "use strict";
+
+    var API = "https://www.miniup.io/api/bridge";
+    var DASHBOARD = "https://www.miniup.io/dashboard/bridge";
+    var VERSION = "0.1.0";
+    var CREDENTIAL_KEY = "miniup.mobileBridge.credential.v1";
+    var POLL_KEY = "miniup.mobileBridge.pollToken.v1";
+
+    var state = {
+      credential: localStorage.getItem(CREDENTIAL_KEY) || "",
+      pollToken: sessionStorage.getItem(POLL_KEY) || "",
+      account: null,
+      destinations: {sites:[],datasets:[],tables:[]},
+      file: null,
+      busy: false,
+      deferredInstall: null
+    };
+
+    var $ = function(id){ return document.getElementById(id); };
+    var els = {
+      connectionPill:$("connectionPill"), pairStart:$("pairStart"), pairFlow:$("pairFlow"), pairBtn:$("pairBtn"),
+      pairCode:$("pairCode"), copyCodeBtn:$("copyCodeBtn"), finishPairBtn:$("finishPairBtn"), accountBox:$("accountBox"),
+      accountName:$("accountName"), accountEmail:$("accountEmail"), forgetBtn:$("forgetBtn"), uploadLimit:$("uploadLimit"),
+      tableLimit:$("tableLimit"), tablesUsed:$("tablesUsed"), uploadsHour:$("uploadsHour"), connectStatus:$("connectStatus"),
+      fileInput:$("fileInput"), fileInfo:$("fileInfo"), fileName:$("fileName"), fileMeta:$("fileMeta"), changeFileBtn:$("changeFileBtn"),
+      fileStatus:$("fileStatus"), refreshBtn:$("refreshBtn"), siteSelect:$("siteSelect"), destinationSelect:$("destinationSelect"),
+      destinationName:$("destinationName"), destinationStatus:$("destinationStatus"), syncBtn:$("syncBtn"),
+      progress:$("progress"), progressBar:$("progressBar"), syncStatus:$("syncStatus"), installArea:$("installArea"),
+      installBtn:$("installBtn"), iosInstallHint:$("iosInstallHint")
+    };
+
+    function status(el, message, type){
+      el.className = "status";
+      if(!message){ el.textContent = ""; return; }
+      el.textContent = message;
+      el.classList.add("show", type || "info");
+    }
+
+    function formatBytes(bytes){
+      if(!Number.isFinite(bytes)) return "—";
+      var units = ["B","KB","MB","GB"];
+      var value = bytes, i = 0;
+      while(value >= 1024 && i < units.length - 1){ value /= 1024; i++; }
+      return (value >= 10 || i === 0 ? value.toFixed(0) : value.toFixed(1)) + " " + units[i];
+    }
+
+    function fileBaseName(name){
+      return String(name || "").replace(/\.[^.]+$/, "").replace(/[_-]+/g," ").trim().slice(0,120);
+    }
+
+    function platformName(){
+      var p = navigator.userAgentData && navigator.userAgentData.platform;
+      if(p) return "web/" + p;
+      if(/iPad|iPhone|iPod/.test(navigator.userAgent)) return "web/iOS";
+      if(/Android/.test(navigator.userAgent)) return "web/Android";
+      return "web/mobile";
+    }
+
+    async function api(action, options){
+      options = options || {};
+      var headers = {"Content-Type":"application/json"};
+      if(state.credential && action !== "pair" && action !== "poll"){
+        headers.Authorization = "Bearer " + state.credential;
+      }
+      var response;
+      try{
+        response = await fetch(API + "/" + action, {
+          method: options.method || (options.body ? "POST" : "GET"),
+          headers: headers,
+          body: options.body ? JSON.stringify(options.body) : undefined,
+          cache: "no-store",
+          credentials: "omit",
+          mode: "cors"
+        });
+      }catch(e){
+        throw new Error("Unable to reach MiniUp. This app must be hosted on a trusted MiniUp web origin.");
+      }
+      var data = {};
+      try{ data = await response.json(); }catch(e){}
+      if(response.status === 401){
+        clearCredential();
+        renderConnection();
+        throw new Error("This Bridge connection was revoked or expired. Connect again.");
+      }
+      if(!response.ok){
+        throw new Error(data && data.error ? data.error : "MiniUp rejected the request.");
+      }
+      return data;
+    }
+
+    function clearCredential(){
+      state.credential = "";
+      state.account = null;
+      state.destinations = {sites:[],datasets:[],tables:[]};
+      localStorage.removeItem(CREDENTIAL_KEY);
+    }
+
+    function renderConnection(){
+      var connected = Boolean(state.credential && state.account);
+      els.connectionPill.textContent = connected ? "Connected" : "Not connected";
+      els.connectionPill.classList.toggle("good", connected);
+      els.pairStart.classList.toggle("hidden", connected || Boolean(state.pollToken));
+      els.pairFlow.classList.toggle("hidden", connected || !state.pollToken);
+      els.accountBox.classList.toggle("show", connected);
+      els.refreshBtn.disabled = !connected || state.busy;
+
+      if(connected){
+        var a = state.account.account || {};
+        var limits = state.account.limits || {};
+        var usage = state.account.usage || {};
+        els.accountName.textContent = a.name || "MiniUp account";
+        els.accountEmail.textContent = a.email || "";
+        els.uploadLimit.textContent = formatBytes(Number(limits.fileUploadSizeBytes));
+        els.tableLimit.textContent = Number(limits.maxTableRecords || 0).toLocaleString();
+        els.tablesUsed.textContent = Number(usage.tables || 0).toLocaleString() + " / " + Number(limits.maxTables || 0).toLocaleString();
+        els.uploadsHour.textContent = Number(limits.uploadsPerHour || 0).toLocaleString();
+      }
+      renderDestinations();
+      updateSyncEnabled();
+    }
+
+    function renderFile(){
+      if(!state.file){
+        els.fileInfo.classList.remove("show");
+        status(els.fileStatus, "", "");
+      }else{
+        els.fileInfo.classList.add("show");
+        els.fileName.textContent = state.file.name;
+        els.fileMeta.textContent = formatBytes(state.file.size) + (state.file.type ? " · " + state.file.type : "");
+        var limit = state.account && state.account.limits ? Number(state.account.limits.fileUploadSizeBytes) : 0;
+        if(limit && state.file.size > limit){
+          status(els.fileStatus, "This file is larger than your MiniUp account upload limit.", "bad");
+        }else{
+          status(els.fileStatus, "Ready to upload.", "good");
+        }
+        if(!els.destinationName.value) els.destinationName.value = fileBaseName(state.file.name);
+      }
+      updateSyncEnabled();
+    }
+
+    function selectedKind(){
+      var input = document.querySelector('input[name="kind"]:checked');
+      return input ? input.value : "dataset";
+    }
+
+    function renderDestinations(){
+      var connected = Boolean(state.credential && state.account);
+      var currentSite = els.siteSelect.value;
+      els.siteSelect.innerHTML = "";
+
+      if(!connected){
+        var empty = document.createElement("option");
+        empty.value = "";
+        empty.textContent = "Connect MiniUp first";
+        els.siteSelect.appendChild(empty);
+        els.siteSelect.disabled = true;
+        els.destinationSelect.disabled = true;
+        els.destinationName.disabled = true;
+        return;
+      }
+
+      var sites = state.destinations.sites || [];
+      if(!sites.length){
+        var noSite = document.createElement("option");
+        noSite.value = "";
+        noSite.textContent = "No active sites";
+        els.siteSelect.appendChild(noSite);
+        els.siteSelect.disabled = true;
+      }else{
+        sites.forEach(function(site){
+          var opt = document.createElement("option");
+          opt.value = String(site.id);
+          opt.textContent = String(site.name || site.slug || site.id);
+          els.siteSelect.appendChild(opt);
+        });
+        if(currentSite && sites.some(function(s){ return String(s.id) === currentSite; })) els.siteSelect.value = currentSite;
+        els.siteSelect.disabled = state.busy;
+      }
+
+      renderDestinationOptions();
+    }
+
+    function renderDestinationOptions(){
+      var siteId = els.siteSelect.value;
+      var kind = selectedKind();
+      var list = kind === "dataset" ? state.destinations.datasets : state.destinations.tables;
+      list = (list || []).filter(function(item){ return String(item.siteId) === siteId; });
+
+      var previous = els.destinationSelect.value;
+      els.destinationSelect.innerHTML = "";
+
+      var create = document.createElement("option");
+      create.value = "";
+      create.textContent = "Create new " + (kind === "dataset" ? "dataset" : "Table");
+      els.destinationSelect.appendChild(create);
+
+      list.forEach(function(item){
+        var opt = document.createElement("option");
+        opt.value = String(item.id);
+        opt.textContent = String(item.name || item.id);
+        els.destinationSelect.appendChild(opt);
+      });
+
+      if(previous && list.some(function(i){ return String(i.id) === previous; })) els.destinationSelect.value = previous;
+      els.destinationSelect.disabled = !siteId || state.busy;
+      syncNameWithDestination();
+    }
+
+    function syncNameWithDestination(){
+      var id = els.destinationSelect.value;
+      var kind = selectedKind();
+      var list = kind === "dataset" ? state.destinations.datasets : state.destinations.tables;
+      var existing = (list || []).find(function(item){ return String(item.id) === id; });
+
+      if(existing){
+        els.destinationName.value = String(existing.name || "");
+        els.destinationName.disabled = true;
+      }else{
+        if(!els.destinationName.value && state.file) els.destinationName.value = fileBaseName(state.file.name);
+        els.destinationName.disabled = !els.siteSelect.value || state.busy;
+      }
+      updateSyncEnabled();
+    }
+
+    function updateSyncEnabled(){
+      var limit = state.account && state.account.limits ? Number(state.account.limits.fileUploadSizeBytes) : 0;
+      var fileOkay = Boolean(state.file && (!limit || state.file.size <= limit));
+      var nameOkay = Boolean(els.destinationSelect.value || els.destinationName.value.trim());
+      var ready = Boolean(state.credential && state.account && fileOkay && els.siteSelect.value && nameOkay && !state.busy);
+      els.syncBtn.disabled = !ready;
+      els.fileInput.disabled = state.busy;
+      document.querySelectorAll('input[name="kind"]').forEach(function(el){ el.disabled = state.busy; });
+    }
+
+    async function loadAccountAndDestinations(){
+      state.busy = true;
+      renderConnection();
+      try{
+        var pair = await Promise.all([api("account"), api("destinations")]);
+        state.account = pair[0];
+        state.destinations = pair[1] || {sites:[],datasets:[],tables:[]};
+        status(els.connectStatus, "Connected to MiniUp.", "good");
+      }finally{
+        state.busy = false;
+        renderConnection();
+        renderFile();
+      }
+    }
+
+    async function startPairing(){
+      status(els.connectStatus, "Creating a pairing code…", "info");
+      els.pairBtn.disabled = true;
+      try{
+        var data = await api("pair", {body:{name:"MiniUp Mobile Bridge",platform:platformName(),version:VERSION}});
+        state.pollToken = data.pollToken || "";
+        if(!state.pollToken) throw new Error("MiniUp did not return a pairing token.");
+        sessionStorage.setItem(POLL_KEY, state.pollToken);
+        els.pairCode.textContent = data.code || "—";
+        els.pairStart.classList.add("hidden");
+        els.pairFlow.classList.remove("hidden");
+        status(els.connectStatus, "Copy the code, approve it in MiniUp, then return here.", "info");
+      }catch(e){
+        status(els.connectStatus, e.message || "Unable to start pairing.", "bad");
+      }finally{
+        els.pairBtn.disabled = false;
+      }
+    }
+
+    async function finishPairing(){
+      if(!state.pollToken) return;
+      els.finishPairBtn.disabled = true;
+      status(els.connectStatus, "Checking approval…", "info");
+      try{
+        var data = await api("poll", {body:{pollToken:state.pollToken}});
+        if(data.pending){
+          status(els.connectStatus, "Not approved yet. Open MiniUp, enter the code, and approve this device.", "warn");
+          return;
+        }
+        if(!data.credential) throw new Error("MiniUp did not return a Bridge credential.");
+        state.credential = data.credential;
+        localStorage.setItem(CREDENTIAL_KEY, state.credential);
+        state.pollToken = "";
+        sessionStorage.removeItem(POLL_KEY);
+        await loadAccountAndDestinations();
+      }catch(e){
+        status(els.connectStatus, e.message || "Unable to finish pairing.", "bad");
+      }finally{
+        els.finishPairBtn.disabled = false;
+      }
+    }
+
+    function xhrUpload(url, file, contentType, onProgress){
+      return new Promise(function(resolve,reject){
+        var xhr = new XMLHttpRequest();
+        xhr.open("PUT", url, true);
+        xhr.setRequestHeader("Content-Type", contentType || "application/octet-stream");
+        xhr.upload.onprogress = function(event){
+          if(event.lengthComputable) onProgress(event.loaded / event.total);
+        };
+        xhr.onerror = function(){ reject(new Error("Upload failed. Your previous MiniUp data is unchanged.")); };
+        xhr.onabort = function(){ reject(new Error("Upload cancelled.")); };
+        xhr.onload = function(){
+          if(xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error("Upload was rejected. Your previous MiniUp data is unchanged."));
+        };
+        xhr.send(file);
+      });
+    }
+
+    async function syncNow(){
+      if(state.busy || !state.file) return;
+      var kind = selectedKind();
+      var siteId = els.siteSelect.value;
+      var destinationId = els.destinationSelect.value || null;
+      var name = els.destinationName.value.trim();
+      var file = state.file;
+
+      state.busy = true;
+      renderConnection();
+      updateSyncEnabled();
+      els.progress.classList.add("show");
+      els.progressBar.style.width = "5%";
+      status(els.syncStatus, "Preparing a secure upload…", "info");
+
+      try{
+        var prepared = await api("prepare", {
+          body:{
+            kind:kind,
+            siteId:siteId,
+            destinationId:destinationId,
+            name:name,
+            fileName:file.name,
+            size:file.size
+          }
+        });
+
+        if(!prepared.uploadUrl || !prepared.syncId) throw new Error("MiniUp did not return a valid upload session.");
+
+        els.progressBar.style.width = "12%";
+        status(els.syncStatus, "Uploading " + file.name + "…", "info");
+
+        await xhrUpload(prepared.uploadUrl, file, prepared.contentType || "application/octet-stream", function(p){
+          els.progressBar.style.width = Math.round(12 + p * 70) + "%";
+        });
+
+        els.progressBar.style.width = "86%";
+        status(els.syncStatus, "Converting and saving in MiniUp…", "info");
+
+        var result = await api("complete", {body:{syncId:prepared.syncId}});
+        els.progressBar.style.width = "100%";
+
+        var rows = Number(result.rowCount);
+        var detail = Number.isFinite(rows) ? " " + rows.toLocaleString() + " rows saved." : "";
+        status(els.syncStatus, "Sync complete." + detail, "good");
+
+        await loadAccountAndDestinations();
+
+        if(result.id){
+          var newList = kind === "dataset" ? state.destinations.datasets : state.destinations.tables;
+          var exists = (newList || []).some(function(item){ return String(item.id) === String(result.id); });
+          if(exists){
+            els.destinationSelect.value = String(result.id);
+            syncNameWithDestination();
+          }
+        }
+      }catch(e){
+        els.progressBar.style.width = "0%";
+        status(els.syncStatus, e.message || "Sync failed. Check the MiniUp Bridge dashboard before retrying.", "bad");
+      }finally{
+        state.busy = false;
+        renderConnection();
+        updateSyncEnabled();
+        setTimeout(function(){
+          if(els.syncStatus.classList.contains("good")) els.progress.classList.remove("show");
+        },1200);
+      }
+    }
+
+    els.pairBtn.addEventListener("click", startPairing);
+    els.finishPairBtn.addEventListener("click", finishPairing);
+    els.copyCodeBtn.addEventListener("click", async function(){
+      var code = els.pairCode.textContent.trim();
+      if(!code || code === "—") return;
+      try{
+        await navigator.clipboard.writeText(code);
+        status(els.connectStatus, "Pairing code copied.", "good");
+      }catch(e){
+        status(els.connectStatus, "Copy the code shown above and enter it in MiniUp.", "info");
+      }
+    });
+
+    els.forgetBtn.addEventListener("click", function(){
+      clearCredential();
+      state.pollToken = "";
+      sessionStorage.removeItem(POLL_KEY);
+      status(els.connectStatus, "Disconnected from this browser.", "info");
+      renderConnection();
+    });
+
+    els.fileInput.addEventListener("change", function(){
+      var file = els.fileInput.files && els.fileInput.files[0];
+      state.file = file || null;
+      if(file && !els.destinationSelect.value) els.destinationName.value = fileBaseName(file.name);
+      renderFile();
+    });
+
+    els.changeFileBtn.addEventListener("click", function(){ els.fileInput.click(); });
+    els.refreshBtn.addEventListener("click", async function(){
+      if(!state.credential) return;
+      els.refreshBtn.disabled = true;
+      status(els.destinationStatus, "Refreshing destinations…", "info");
+      try{
+        state.destinations = await api("destinations");
+        renderDestinations();
+        status(els.destinationStatus, "Destinations refreshed.", "good");
+      }catch(e){
+        status(els.destinationStatus, e.message || "Unable to refresh destinations.", "bad");
+      }finally{
+        els.refreshBtn.disabled = false;
+      }
+    });
+
+    document.querySelectorAll('input[name="kind"]').forEach(function(input){
+      input.addEventListener("change", function(){
+        els.destinationSelect.value = "";
+        if(state.file) els.destinationName.value = fileBaseName(state.file.name);
+        renderDestinationOptions();
+      });
+    });
+    els.siteSelect.addEventListener("change", function(){
+      els.destinationSelect.value = "";
+      renderDestinationOptions();
+    });
+    els.destinationSelect.addEventListener("change", syncNameWithDestination);
+    els.destinationName.addEventListener("input", updateSyncEnabled);
+    els.syncBtn.addEventListener("click", syncNow);
+
+    window.addEventListener("beforeinstallprompt", function(event){
+      event.preventDefault();
+      state.deferredInstall = event;
+      els.installArea.classList.add("show");
+      els.installBtn.classList.remove("hidden");
+    });
+
+    els.installBtn.addEventListener("click", async function(){
+      if(!state.deferredInstall) return;
+      state.deferredInstall.prompt();
+      try{ await state.deferredInstall.userChoice; }catch(e){}
+      state.deferredInstall = null;
+      els.installBtn.classList.add("hidden");
+    });
+
+    var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if(isIOS && !standalone){
+      els.installArea.classList.add("show");
+      els.installBtn.classList.add("hidden");
+      els.iosInstallHint.classList.remove("hidden");
+    }
+
+    if("serviceWorker" in navigator){
+      window.addEventListener("load", function(){
+        navigator.serviceWorker.register("./sw.js").catch(function(){});
+      });
+    }
+
+    renderConnection();
+    renderFile();
+
+    if(state.pollToken){
+      els.pairStart.classList.add("hidden");
+      els.pairFlow.classList.remove("hidden");
+      els.pairCode.textContent = "Pending";
+      status(els.connectStatus, "A pairing request is still pending. Approve it in MiniUp, then tap I've approved it.", "info");
+    }
+
+    if(state.credential){
+      loadAccountAndDestinations().catch(function(e){
+        status(els.connectStatus, e.message || "Unable to restore the MiniUp connection.", "bad");
+      });
+    }
+  })();
+  </script>
+</body>
+</html>
